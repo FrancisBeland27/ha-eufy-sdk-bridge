@@ -21,6 +21,8 @@ services:
       # WS/HTTP control port. Change it by setting BRIDGE_PORT in .env (default 3000). On host
       # networking the daemon simply binds this port; the integration must use the same one.
       BRIDGE_PORT: ${BRIDGE_PORT:-3000}
+      # Explicitly pass this through so the service configuration is visible in `docker compose config`.
+      GO2RTC_ENABLE: ${GO2RTC_ENABLE:-1}
     volumes:
       # Persist the login so a restart doesn't re-authenticate (eufy = ONE session per account).
       - ./data:/app/data

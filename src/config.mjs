@@ -70,7 +70,7 @@ export function loadConfig(env = process.env) {
     // session / split push delivery. Set a unique value per bridge when you run more than one on an account.
     openudid: env.BRIDGE_OPENUDID || undefined,
     go2rtcConfig: env.GO2RTC_CONFIG || "./go2rtc.yaml",
-    go2rtcEnable: env.GO2RTC_ENABLE !== "0",
+    go2rtcEnable: String(env.GO2RTC_ENABLE ?? "1").trim() !== "0",
     selfHost: env.BRIDGE_SELF_HOST || "127.0.0.1",
     // Cloud poll interval (ms). Unset → the SDK default (600000 = 10 min). Changeable live via the
     // config.set WS command. 0 disables polling.
