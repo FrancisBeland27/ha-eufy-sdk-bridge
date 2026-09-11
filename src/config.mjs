@@ -64,6 +64,7 @@ export function loadConfig(env = process.env) {
     port: Number(env.BRIDGE_PORT || 3000),
     session: env.EUFY_SESSION || "./data/.eufy-session.json",
     go2rtcConfig: env.GO2RTC_CONFIG || "./go2rtc.yaml",
+    go2rtcEnable: env.GO2RTC_ENABLE !== "0",
     selfHost: env.BRIDGE_SELF_HOST || "127.0.0.1",
     // Cloud poll interval (ms). Unset → the SDK default (600000 = 10 min). Changeable live via the
     // config.set WS command. 0 disables polling.
