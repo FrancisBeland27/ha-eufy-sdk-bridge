@@ -4,20 +4,18 @@
 // account's Solix devices as capability-driven SolixDevice objects, opens the shared SecureMqtt
 // telemetry stream, and forwards devices + live readings to WS clients (events `solixReady` /
 // `solixReading` / `solixAuth`; queried via `solix.devices` / `solix.status`).
-import { SolixClient, FileSolixSessionStore, SolixMqtt } from "@mega-yfue/eufy-sdk";
-
 export function createSolix(ctx) {
   const { cfg } = ctx;
   const s = cfg.solix;
   if (!s) return {}; // disabled — no SOLIX_EMAIL/PASSWORD
 
   const st = ctx.state.solix; // { status, devices: Map<sn,SolixDevice>, client, mqtt }
-  st.client = new SolixClient({
-    email: s.email,
-    password: s.password,
-    countryCode: s.country,
-    store: new FileSolixSessionStore(s.session),
-  });
+  let solixSdk;
+
+  async function loadSolixSdk() {
+    solixSdk ??= await import("@mega-yfue/eufy-sdk");
+    return solixSdk;
+  }
 
   /** A WS-facing summary of one Solix device: identity + capabilities + the latest telemetry values. */
   function summarize(dev) {
@@ -53,6 +51,7 @@ export function createSolix(ctx) {
 
     // Live telemetry over the shared AWS-IoT broker (same transport the eufy path uses).
     try {
+      const { SolixMqtt } = await loadSolixSdk();
       const mqtt = new SolixMqtt({ mqttInfo: await st.client.getUserMqttInfo() });
       st.mqtt = mqtt;
       mqtt.on("error", (e) => console.error(`[bridge] solix mqtt: ${e?.message ?? e}`));
@@ -79,6 +78,13 @@ export function createSolix(ctx) {
     st.status = "connecting";
     ctx.broadcast({ event: "solixAuth", state: "connecting" });
     try {
+      const { SolixClient, FileSolixSessionStore } = await loadSolixSdk();
+      st.client ??= new SolixClient({
+        email: s.email,
+        password: s.password,
+        countryCode: s.country,
+        store: new FileSolixSessionStore(s.session),
+      });
       const r = await st.client.login();
       if (r.status === "2fa") {
         st.status = "2fa";
