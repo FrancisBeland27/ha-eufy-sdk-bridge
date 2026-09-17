@@ -120,6 +120,21 @@ export function createHttpHandler(ctx) {
         rtspLastActive.set(sn, Date.now()); // a live stream counts as activity for the rtspStream auto-off
         res.writeHead(200, { "content-type": "video/H264", "cache-control": "no-cache" });
         feed.pipe(res);
+        req.on("close", () => {
+        console.log(`[bridge:stream] ${sn} HTTP request CLOSE`);
+        });
+
+        feed.on("end", () => {
+        console.log(`[bridge:stream] ${sn} FEED END`);
+        });
+
+        feed.on("close", () => {
+        console.log(`[bridge:stream] ${sn} FEED CLOSE`);
+        });
+
+        feed.on("error", (e) => {
+        console.log(`[bridge:stream] ${sn} FEED ERROR: ${e?.message ?? e}`);
+      });
         // streaming.delete returns true only on the first cleanup for this feed → broadcast "off" once.
         const cleanup = () => {
           feed.destroy();
