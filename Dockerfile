@@ -19,7 +19,7 @@
 # `SDK_DIST_TAG=beta`, so every :dev image tracks the newest eufy-sdk beta without any committed change.
 #     docker build --build-arg SDK_DIST_TAG=beta -t ha-eufy-sdk-bridge:dev .
 FROM node:24-alpine
-RUN apk add --no-cache ffmpeg curl
+RUN apk add --no-cache ffmpeg git
 WORKDIR /app
 
 # go2rtc — pin the version so an image rebuild cannot change media behaviour. Select the binary by
