@@ -37,12 +37,21 @@ RUN case "${TARGETARCH:-amd64}" in \
       "https://github.com/AlexxIT/go2rtc/releases/download/v${GO2RTC_VERSION}/${g2}" \
  && chmod +x /usr/local/bin/go2rtc
 
-# Install the bridge's deps from npm: the SDK (@mega-yfue/eufy-sdk → pulls mqtt/protobufjs/werift) + ws.
-# `npm ci` installs the exact locked (stable) tree; the dev build then overlays the requested SDK dist-tag
-# on top (see SDK_DIST_TAG above). `--no-save` keeps package.json/lock untouched, so no drift leaks in.
+# Install the bridge's deps from npm. The SDK Git dependency contains only its published files because
+# its package.json allows dist/ only, so clone and build the requested branch separately, then copy the
+# generated output into the installed dependency.
 ARG SDK_DIST_TAG=
+ARG SDK_REPO=https://github.com/FrancisBeland27/eufy-sdk.git
+ARG SDK_REF=feat/t85a1
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund \
+ && git clone --depth 1 --branch "$SDK_REF" "$SDK_REPO" /tmp/eufy-sdk \
+ && cd /tmp/eufy-sdk \
+ && npm ci --no-audit --no-fund \
+ && npm run build \
+ && rm -rf /app/node_modules/@mega-yfue/eufy-sdk/dist \
+ && cp -R dist /app/node_modules/@mega-yfue/eufy-sdk/dist \
+ && rm -rf /tmp/eufy-sdk \
  && if [ -n "$SDK_DIST_TAG" ]; then \
       echo "SDK_DIST_TAG=$SDK_DIST_TAG → overlaying @mega-yfue/eufy-sdk@$SDK_DIST_TAG (dev channel)"; \
       npm install --omit=dev --no-audit --no-fund --no-save "@mega-yfue/eufy-sdk@$SDK_DIST_TAG"; \
